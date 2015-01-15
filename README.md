@@ -1,4 +1,4 @@
 Try
 ===
 
-Try to use github.
+Try to use Github.
