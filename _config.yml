@@ -1,0 +1,8 @@
+title: Try
+description: Try to use Github
+google_analytics: 
+show_downloads: true
+theme: jekyll-theme-midnight
+
+gems:
+  - jekyll-mentions
