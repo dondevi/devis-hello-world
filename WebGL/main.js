@@ -42,10 +42,10 @@
    * ---------------------------------------------------------------------------
    */
   var squarePositions = [
-     1.0,  1.0, 0.0,
     -1.0,  1.0, 0.0,
-     1.0, -1.0, 0.0,
+     1.0,  1.0, 0.0,
     -1.0, -1.0, 0.0,
+     1.0, -1.0, 0.0,
   ];
   var squareColors = [
     1.0, 1.0, 1.0, 1.0,  // White
@@ -54,6 +54,79 @@
     0.0, 0.0, 1.0, 1.0,  // Blue
   ];
   var squareRotation = 0.0;
+
+  var cubePositions = [
+    // Front
+    -1.0, -1.0,  1.0,
+     1.0, -1.0,  1.0,
+     1.0,  1.0,  1.0,
+    -1.0,  1.0,  1.0,
+    // Back
+    -1.0, -1.0, -1.0,
+    -1.0,  1.0, -1.0,
+     1.0,  1.0, -1.0,
+     1.0, -1.0, -1.0,
+    // Top
+    -1.0,  1.0, -1.0,
+    -1.0,  1.0,  1.0,
+     1.0,  1.0,  1.0,
+     1.0,  1.0, -1.0,
+    // Bottom
+    -1.0, -1.0, -1.0,
+     1.0, -1.0, -1.0,
+     1.0, -1.0,  1.0,
+    -1.0, -1.0,  1.0,
+    // Right
+     1.0, -1.0, -1.0,
+     1.0,  1.0, -1.0,
+     1.0,  1.0,  1.0,
+     1.0, -1.0,  1.0,
+    // Left
+    -1.0, -1.0, -1.0,
+    -1.0, -1.0,  1.0,
+    -1.0,  1.0,  1.0,
+    -1.0,  1.0, -1.0,
+  ];
+  var cubeIndices = [
+     0,  1,  2,    0,   2,  3,  // Front
+     4,  5,  6,    4,   6,  7,  // Back
+     8,  9, 10,    8,  10, 11,  // Top
+    12, 13, 14,    12, 14, 15,  // Bottom
+    16, 17, 18,    16, 18, 19,  // Right
+    20, 21, 22,    20, 22, 23,  // Left
+  ];
+  var cubeColors = [
+    // Front: White
+    1.0, 1.0 , 1.0, 1.0,
+    1.0, 1.0 , 1.0, 1.0,
+    1.0, 1.0 , 1.0, 1.0,
+    1.0, 1.0 , 1.0, 1.0,
+    // Back: Red
+    1.0, 0.0 , 0.0, 1.0,
+    1.0, 0.0 , 0.0, 1.0,
+    1.0, 0.0 , 0.0, 1.0,
+    1.0, 0.0 , 0.0, 1.0,
+    // Top: Green
+    0.0, 1.0 , 0.0, 1.0,
+    0.0, 1.0 , 0.0, 1.0,
+    0.0, 1.0 , 0.0, 1.0,
+    0.0, 1.0 , 0.0, 1.0,
+    // Bottom: Blue
+    0.0, 0.0 , 1.0, 1.0,
+    0.0, 0.0 , 1.0, 1.0,
+    0.0, 0.0 , 1.0, 1.0,
+    0.0, 0.0 , 1.0, 1.0,
+    // Right: Yellow
+    1.0, 1.0 , 0.0, 1.0,
+    1.0, 1.0 , 0.0, 1.0,
+    1.0, 1.0 , 0.0, 1.0,
+    1.0, 1.0 , 0.0, 1.0,
+    // Right: Purple
+    1.0, 0.0 , 1.0, 1.0,
+    1.0, 0.0 , 1.0, 1.0,
+    1.0, 0.0 , 1.0, 1.0,
+    1.0, 0.0 , 1.0, 1.0,
+  ];
 
   /**
    * ---------------------------------------------------------------------------
@@ -65,12 +138,20 @@
 
   var program = createShaderProgram(gl, vsSource, fsSource);
   var programInfo = getShaderProgramInfo(gl, program);
+
+  // var bufferInfo = {
+  //   "position": createBuffer(gl, squarePositions),
+  //   "color": createBuffer(gl, squareColors),
+  // };
+
   var bufferInfo = {
-    "position": createBuffer(gl, squarePositions),
-    "color": createBuffer(gl, squareColors),
+    "position": createBuffer(gl, cubePositions),
+    "indice": createElementBuffer(gl, cubeIndices),
+    "color": createBuffer(gl, cubeColors),
   };
 
   initScene(gl);
+  drawScene(gl, programInfo, bufferInfo);
 
   var rotateAnimation = createRotateAnimation(function (deltaRotation) {
     drawScene(gl, programInfo, bufferInfo, squareRotation += deltaRotation);
@@ -166,19 +247,25 @@
    * @requires gl-matrix.js
    */
   function drawScene (gl, programInfo, bufferInfo, rotation) {
+    resetScene(gl);
+
     var pMatrix = mat4.create();
     var mvMatrix = mat4.create();
-    resetScene(gl);
     mat4.perspective(pMatrix, 45, gl.drawingBufferWidth / gl.drawingBufferHeight, 0.1, 100.0);
     mat4.translate(mvMatrix, mvMatrix, [-0.0, 0.0, -6.0]);
-    mat4.rotate(mvMatrix, mvMatrix, rotation, [0, 0, 1]);
+    mat4.rotate(mvMatrix, mvMatrix, rotation, [0, 1, 1]);
+
     gl.bindBuffer(gl.ARRAY_BUFFER, bufferInfo["position"]);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, bufferInfo["indice"]);
     gl.vertexAttribPointer(programInfo.attribLocations["aVertexPosition"], 3, gl.FLOAT, false, 0, 0);
     gl.bindBuffer(gl.ARRAY_BUFFER, bufferInfo["color"]);
     gl.vertexAttribPointer(programInfo.attribLocations["aVertexColor"], 4, gl.FLOAT, false, 0, 0);
+
     gl.uniformMatrix4fv(programInfo.uniformLocations["uProjectionMatrix"], false, pMatrix);
     gl.uniformMatrix4fv(programInfo.uniformLocations["uModelViewMatrix"], false, mvMatrix);
-    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
+    // gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    gl.drawElements(gl.TRIANGLES, 36, gl.UNSIGNED_SHORT, 0);
   }
 
 
@@ -232,6 +319,19 @@
     var buffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data), gl.STATIC_DRAW);
+    return buffer;
+  }
+
+  /**
+   * Create Element Buffer
+   * @param  {Object} gl   - WebGLShadingContext
+   * @param  {Array}  data
+   * @return {Object}
+   */
+  function createElementBuffer (gl, data) {
+    var buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffer);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(data), gl.STATIC_DRAW);
     return buffer;
   }
 
