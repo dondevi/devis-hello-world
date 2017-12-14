@@ -15,24 +15,31 @@
   var vsSource = `
     attribute vec4 aVertexPosition;
     attribute vec4 aVertexColor;
+    attribute vec2 aTextureCoord;
 
     uniform mat4 uProjectionMatrix;
     uniform mat4 uModelViewMatrix;
 
     varying lowp vec4 vColor;
+    varying highp vec2 vTextureCoord;
 
     void main () {
       gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
       vColor = aVertexColor;
+      vTextureCoord = aTextureCoord;
     }
   `;
 
   var fsSource = `
     varying lowp vec4 vColor;
+    varying highp vec2 vTextureCoord;
+
+    uniform sampler2D uSampler;
 
     void main () {
       // gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
-      gl_FragColor = vColor;
+      // gl_FragColor = vColor;
+      gl_FragColor = texture2D(uSampler, vTextureCoord);
     }
   `;
 
@@ -127,6 +134,38 @@
     1.0, 0.0 , 1.0, 1.0,
     1.0, 0.0 , 1.0, 1.0,
   ];
+  var cubeTextureCoords = [
+    // Front
+    0.0,  0.0,
+    1.0,  0.0,
+    1.0,  1.0,
+    0.0,  1.0,
+    // Back
+    0.0,  0.0,
+    1.0,  0.0,
+    1.0,  1.0,
+    0.0,  1.0,
+    // Top
+    0.0,  0.0,
+    1.0,  0.0,
+    1.0,  1.0,
+    0.0,  1.0,
+    // Bottom
+    0.0,  0.0,
+    1.0,  0.0,
+    1.0,  1.0,
+    0.0,  1.0,
+    // Right
+    0.0,  0.0,
+    1.0,  0.0,
+    1.0,  1.0,
+    0.0,  1.0,
+    // Left
+    0.0,  0.0,
+    1.0,  0.0,
+    1.0,  1.0,
+    0.0,  1.0
+  ];
 
   /**
    * ---------------------------------------------------------------------------
@@ -146,15 +185,18 @@
 
   var bufferInfo = {
     "position": createBuffer(gl, cubePositions),
-    "indice": createElementBuffer(gl, cubeIndices),
     "color": createBuffer(gl, cubeColors),
+    "indice": createElementBuffer(gl, cubeIndices),
+    "texture": createBuffer(gl, cubeTextureCoords),
   };
 
+  var texture = createTexture(gl, "./tex_4.jpg");
+
   initScene(gl);
-  drawScene(gl, programInfo, bufferInfo);
+  drawScene(gl, programInfo, bufferInfo, texture);
 
   var rotateAnimation = createRotateAnimation(function (deltaRotation) {
-    drawScene(gl, programInfo, bufferInfo, squareRotation += deltaRotation);
+    drawScene(gl, programInfo, bufferInfo, texture, squareRotation += deltaRotation);
   });
 
   rotateAnimation.run();
@@ -180,6 +222,39 @@
    *  Business Function
    * ---------------------------------------------------------------------------
    */
+
+  /**
+   * create Texture
+   * @param  {Object} gl  - WebGLRenderingContext
+   * @param  {sTRING} src - Image src
+   * @return {Object}
+   */
+  function createTexture (gl, src) {
+    var texture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([255, 255, 255, 255]));
+
+
+    var image = new Image();
+    image.onload = function (event) {
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+      if (isPowerOf2(image.width) && isPowerOf2(image.height)) {
+        gl.generateMipmap(gl.TEXTURE_2D);
+      } else {
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+      }
+    };
+    image.crossOrigin = "anonymous";
+    image.src = src;
+
+    return texture;
+  }
+
+  function isPowerOf2 (value) {
+    return 0 === (value & (value - 1));
+  }
 
   /**
    * Create Rotate Animation
@@ -221,19 +296,24 @@
   function getShaderProgramInfo (gl, program) {
     var aVertexPosition = gl.getAttribLocation(program, "aVertexPosition");
     var aVertexColor = gl.getAttribLocation(program, "aVertexColor");
+    var aTextureCoord = gl.getAttribLocation(program, "aTextureCoord");
     var uProjectionMatrix = gl.getUniformLocation(program, "uProjectionMatrix");
     var uModelViewMatrix =  gl.getUniformLocation(program, "uModelViewMatrix");
+    var uSampler =  gl.getUniformLocation(program, "uSampler");
     gl.enableVertexAttribArray(aVertexPosition);
     gl.enableVertexAttribArray(aVertexColor);
+    gl.enableVertexAttribArray(aTextureCoord);
     return {
       program: program,
       attribLocations: {
         "aVertexPosition": aVertexPosition,
         "aVertexColor":  aVertexColor,
+        "aTextureCoord":  aTextureCoord,
       },
       uniformLocations: {
         "uProjectionMatrix": uProjectionMatrix,
         "uModelViewMatrix":  uModelViewMatrix,
+        "uSampler": uSampler,
       },
     };
   }
@@ -243,10 +323,11 @@
    * @param  {Object} gl          - WebGLRenderingContext
    * @param  {Object} programInfo - Shader Program Info
    * @param  {Object} bufferInfo  - Buffer Info
+   * @param  {Object} texture     - Object Texture
    * @param  {Number} rotation    - Object Rotation
    * @requires gl-matrix.js
    */
-  function drawScene (gl, programInfo, bufferInfo, rotation) {
+  function drawScene (gl, programInfo, bufferInfo, texture, rotation) {
     resetScene(gl);
 
     var pMatrix = mat4.create();
@@ -256,13 +337,19 @@
     mat4.rotate(mvMatrix, mvMatrix, rotation, [0, 1, 1]);
 
     gl.bindBuffer(gl.ARRAY_BUFFER, bufferInfo["position"]);
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, bufferInfo["indice"]);
     gl.vertexAttribPointer(programInfo.attribLocations["aVertexPosition"], 3, gl.FLOAT, false, 0, 0);
     gl.bindBuffer(gl.ARRAY_BUFFER, bufferInfo["color"]);
     gl.vertexAttribPointer(programInfo.attribLocations["aVertexColor"], 4, gl.FLOAT, false, 0, 0);
+    gl.bindBuffer(gl.ARRAY_BUFFER, bufferInfo["texture"]);
+    gl.vertexAttribPointer(programInfo.attribLocations["aTextureCoord"], 2, gl.FLOAT, false, 0, 0);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, bufferInfo["indice"]);
 
     gl.uniformMatrix4fv(programInfo.uniformLocations["uProjectionMatrix"], false, pMatrix);
     gl.uniformMatrix4fv(programInfo.uniformLocations["uModelViewMatrix"], false, mvMatrix);
+
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.uniform1i(programInfo.uniformLocations["uSampler"], 0);
 
     // gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     gl.drawElements(gl.TRIANGLES, 36, gl.UNSIGNED_SHORT, 0);
