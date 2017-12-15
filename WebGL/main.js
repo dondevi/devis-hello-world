@@ -237,12 +237,29 @@
     "aVertexNormal": createBuffer(gl, cubeNormals),
   };
 
-  var texture = createTexture(gl, "./tex_4.jpg");
+  var texture = createTexture(gl);
+
+  // var image = new Image();
+  // image.onload = function (event) {
+  //   updateTexture(gl, texture, image);
+  //   if (!isPowerOf2(image.width) || !isPowerOf2(image.height)) {
+  //     console.error("Image size must be power of 2.");
+  //   }
+  // };
+  // image.crossOrigin = "anonymous";
+  // image.src = "./tex_4.jpg";
+
+  var video  = document.getElementById("video");
+  video.autoplay = true;
+  video.muted = true;
+  video.loop = true;
+  video.src = "./video.mp4";
 
   initScene(gl);
   drawScene(gl, programInfo, bufferInfo, texture);
 
   var rotateAnimation = createRotateAnimation(function (deltaRotation) {
+    updateTexture(gl, texture, video);
     drawScene(gl, programInfo, bufferInfo, texture, squareRotation += deltaRotation);
   });
 
@@ -262,6 +279,7 @@
    */
   function HANLDER_clickCanvas (event) {
     rotateAnimation.toggle();
+    video.paused ? video.play() : video.pause();
   };
 
   /**
@@ -269,39 +287,6 @@
    *  Business Function
    * ---------------------------------------------------------------------------
    */
-
-  /**
-   * create Texture
-   * @param  {Object} gl  - WebGLRenderingContext
-   * @param  {sTRING} src - Image src
-   * @return {Object}
-   */
-  function createTexture (gl, src) {
-    var texture = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, texture);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([255, 255, 255, 255]));
-
-
-    var image = new Image();
-    image.onload = function (event) {
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-      if (isPowerOf2(image.width) && isPowerOf2(image.height)) {
-        gl.generateMipmap(gl.TEXTURE_2D);
-      } else {
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-      }
-    };
-    image.crossOrigin = "anonymous";
-    image.src = src;
-
-    return texture;
-  }
-
-  function isPowerOf2 (value) {
-    return 0 === (value & (value - 1));
-  }
 
   /**
    * Create Rotate Animation
@@ -313,7 +298,7 @@
     var isStop = !!callback;
     var rotate = function (nowTime) {
       var deltaTime = nowTime - preTime;
-      var deltaRotation = deltaTime * 0.001;
+      var deltaRotation = deltaTime * 0.0008;
       preTime = nowTime;
       callback && callback(deltaRotation);
       if (isStop) { return; }
@@ -382,8 +367,9 @@
     var mvMatrix = mat4.create();
     mat4.perspective(pMatrix, 45, gl.drawingBufferWidth / gl.drawingBufferHeight, 0.1, 100.0);
     mat4.translate(mvMatrix, mvMatrix, [-0.0, 0.0, -6.0]);
-    mat4.rotate(mvMatrix, mvMatrix, rotation, [0, 0, 1]);
+    mat4.rotate(mvMatrix, mvMatrix, rotation * 0.5, [1, 0, 1]);
     mat4.rotate(mvMatrix, mvMatrix, rotation * 0.7, [0, 1, 0]);
+    mat4.rotate(mvMatrix, mvMatrix, rotation, [0, 0, 1]);
 
     var nmMatrix = mat4.create();
     mat4.invert(nmMatrix, mvMatrix);
@@ -477,6 +463,39 @@
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(data), gl.STATIC_DRAW);
     return buffer;
   }
+
+  /**
+   * Create Texture
+   * @param  {Object} gl  - WebGLRenderingContext
+   * @return {Object}
+   */
+  function createTexture (gl) {
+    var texture = gl.createTexture();
+
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([255, 255, 255, 255]));
+
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+
+    return texture;
+  }
+
+  /**
+   * Update Texture
+   * @param {Object} gl      - WebGLRenderingContext
+   * @param {Object} texture - WebGLTexture
+   * @param {Object} element - Image or Video
+   */
+  function updateTexture (gl, texture, element) {
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, element);
+  }
+
+  // function isPowerOf2 (value) {
+  //   return 0 === (value & (value - 1));
+  // }
 
   /**
    * Init Scene
