@@ -16,30 +16,44 @@
     attribute vec4 aVertexPosition;
     attribute vec4 aVertexColor;
     attribute vec2 aTextureCoord;
+    attribute vec3 aVertexNormal;
 
     uniform mat4 uProjectionMatrix;
     uniform mat4 uModelViewMatrix;
+    uniform mat4 uNormalMatrix;
 
     varying lowp vec4 vColor;
     varying highp vec2 vTextureCoord;
+    varying highp vec3 vLighting;
 
     void main () {
       gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
       vColor = aVertexColor;
       vTextureCoord = aTextureCoord;
+
+      highp vec3 ambientLight = vec3(0.3, 0.3, 0.3);
+      highp vec3 directionalLightColor = vec3(1.0, 1.0, 1.0);
+      highp vec3 directionalVector = normalize(vec3(0.85, 0.8, 0.75));
+
+      highp vec4 transformedNormal = uNormalMatrix * vec4(aVertexNormal, 1.0);
+      highp float directional = max(dot(transformedNormal.xyz, directionalVector), 0.0);
+      vLighting = ambientLight + directionalLightColor * directional;
     }
   `;
 
   var fsSource = `
     varying lowp vec4 vColor;
     varying highp vec2 vTextureCoord;
+    varying highp vec3 vLighting;
 
     uniform sampler2D uSampler;
 
     void main () {
       // gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
       // gl_FragColor = vColor;
-      gl_FragColor = texture2D(uSampler, vTextureCoord);
+      // gl_FragColor = texture2D(uSampler, vTextureCoord);
+      highp vec4 texelColor = texture2D(uSampler, vTextureCoord);
+      gl_FragColor = vec4(texelColor.rgb * vLighting, texelColor.a);
     }
   `;
 
@@ -166,6 +180,38 @@
     1.0,  1.0,
     0.0,  1.0
   ];
+  var cubeNormals = [
+    // Front
+     0.0,  0.0,  1.0,
+     0.0,  0.0,  1.0,
+     0.0,  0.0,  1.0,
+     0.0,  0.0,  1.0,
+    // Back
+     0.0,  0.0, -1.0,
+     0.0,  0.0, -1.0,
+     0.0,  0.0, -1.0,
+     0.0,  0.0, -1.0,
+    // Top
+     0.0,  1.0,  0.0,
+     0.0,  1.0,  0.0,
+     0.0,  1.0,  0.0,
+     0.0,  1.0,  0.0,
+    // Bottom
+     0.0, -1.0,  0.0,
+     0.0, -1.0,  0.0,
+     0.0, -1.0,  0.0,
+     0.0, -1.0,  0.0,
+    // Right
+     1.0,  0.0,  0.0,
+     1.0,  0.0,  0.0,
+     1.0,  0.0,  0.0,
+     1.0,  0.0,  0.0,
+    // Left
+    -1.0,  0.0,  0.0,
+    -1.0,  0.0,  0.0,
+    -1.0,  0.0,  0.0,
+    -1.0,  0.0,  0.0
+  ];
 
   /**
    * ---------------------------------------------------------------------------
@@ -179,15 +225,16 @@
   var programInfo = getShaderProgramInfo(gl, program);
 
   // var bufferInfo = {
-  //   "position": createBuffer(gl, squarePositions),
-  //   "color": createBuffer(gl, squareColors),
+  //   "aVertexPosition": createBuffer(gl, squarePositions),
+  //   "aVertexColor": createBuffer(gl, squareColors),
   // };
 
   var bufferInfo = {
-    "position": createBuffer(gl, cubePositions),
-    "color": createBuffer(gl, cubeColors),
-    "indice": createElementBuffer(gl, cubeIndices),
-    "texture": createBuffer(gl, cubeTextureCoords),
+    "aVertexPosition": createBuffer(gl, cubePositions),
+    "aVertexColor": createBuffer(gl, cubeColors),
+    "aTextureCoord": createBuffer(gl, cubeTextureCoords),
+    "aVertexIndice": createElementBuffer(gl, cubeIndices),
+    "aVertexNormal": createBuffer(gl, cubeNormals),
   };
 
   var texture = createTexture(gl, "./tex_4.jpg");
@@ -297,23 +344,24 @@
     var aVertexPosition = gl.getAttribLocation(program, "aVertexPosition");
     var aVertexColor = gl.getAttribLocation(program, "aVertexColor");
     var aTextureCoord = gl.getAttribLocation(program, "aTextureCoord");
-    var uProjectionMatrix = gl.getUniformLocation(program, "uProjectionMatrix");
-    var uModelViewMatrix =  gl.getUniformLocation(program, "uModelViewMatrix");
-    var uSampler =  gl.getUniformLocation(program, "uSampler");
+    var aVertexNormal = gl.getAttribLocation(program, "aVertexNormal");
     gl.enableVertexAttribArray(aVertexPosition);
     gl.enableVertexAttribArray(aVertexColor);
     gl.enableVertexAttribArray(aTextureCoord);
+    gl.enableVertexAttribArray(aVertexNormal);
     return {
       program: program,
       attribLocations: {
         "aVertexPosition": aVertexPosition,
-        "aVertexColor":  aVertexColor,
-        "aTextureCoord":  aTextureCoord,
+        "aVertexColor": aVertexColor,
+        "aTextureCoord": aTextureCoord,
+        "aVertexNormal": aVertexNormal,
       },
       uniformLocations: {
-        "uProjectionMatrix": uProjectionMatrix,
-        "uModelViewMatrix":  uModelViewMatrix,
-        "uSampler": uSampler,
+        "uProjectionMatrix": gl.getUniformLocation(program, "uProjectionMatrix"),
+        "uModelViewMatrix": gl.getUniformLocation(program, "uModelViewMatrix"),
+        "uNormalMatrix": gl.getUniformLocation(program, "uNormalMatrix"),
+        "uSampler": gl.getUniformLocation(program, "uSampler"),
       },
     };
   }
@@ -334,18 +382,26 @@
     var mvMatrix = mat4.create();
     mat4.perspective(pMatrix, 45, gl.drawingBufferWidth / gl.drawingBufferHeight, 0.1, 100.0);
     mat4.translate(mvMatrix, mvMatrix, [-0.0, 0.0, -6.0]);
-    mat4.rotate(mvMatrix, mvMatrix, rotation, [0, 1, 1]);
+    mat4.rotate(mvMatrix, mvMatrix, rotation, [0, 0, 1]);
+    mat4.rotate(mvMatrix, mvMatrix, rotation * 0.7, [0, 1, 0]);
 
-    gl.bindBuffer(gl.ARRAY_BUFFER, bufferInfo["position"]);
+    var nmMatrix = mat4.create();
+    mat4.invert(nmMatrix, mvMatrix);
+    mat4.transpose(nmMatrix, nmMatrix);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, bufferInfo["aVertexPosition"]);
     gl.vertexAttribPointer(programInfo.attribLocations["aVertexPosition"], 3, gl.FLOAT, false, 0, 0);
-    gl.bindBuffer(gl.ARRAY_BUFFER, bufferInfo["color"]);
+    gl.bindBuffer(gl.ARRAY_BUFFER, bufferInfo["aVertexColor"]);
     gl.vertexAttribPointer(programInfo.attribLocations["aVertexColor"], 4, gl.FLOAT, false, 0, 0);
-    gl.bindBuffer(gl.ARRAY_BUFFER, bufferInfo["texture"]);
+    gl.bindBuffer(gl.ARRAY_BUFFER, bufferInfo["aTextureCoord"]);
     gl.vertexAttribPointer(programInfo.attribLocations["aTextureCoord"], 2, gl.FLOAT, false, 0, 0);
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, bufferInfo["indice"]);
+    gl.bindBuffer(gl.ARRAY_BUFFER, bufferInfo["aVertexNormal"]);
+    gl.vertexAttribPointer(programInfo.attribLocations["aVertexNormal"], 3, gl.FLOAT, false, 0, 0);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, bufferInfo["aVertexIndice"]);
 
     gl.uniformMatrix4fv(programInfo.uniformLocations["uProjectionMatrix"], false, pMatrix);
     gl.uniformMatrix4fv(programInfo.uniformLocations["uModelViewMatrix"], false, mvMatrix);
+    gl.uniformMatrix4fv(programInfo.uniformLocations["uNormalMatrix"], false, nmMatrix);
 
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, texture);
