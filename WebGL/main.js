@@ -27,16 +27,17 @@
     varying highp vec3 vLighting;
 
     void main () {
-      gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
-      vColor = aVertexColor;
-      vTextureCoord = aTextureCoord;
-
       highp vec3 ambientLight = vec3(0.3, 0.3, 0.3);
       highp vec3 directionalLightColor = vec3(1.0, 1.0, 1.0);
       highp vec3 directionalVector = normalize(vec3(0.85, 0.8, 0.75));
 
       highp vec4 transformedNormal = uNormalMatrix * vec4(aVertexNormal, 1.0);
       highp float directional = max(dot(transformedNormal.xyz, directionalVector), 0.0);
+
+      gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
+
+      vColor = aVertexColor;
+      vTextureCoord = aTextureCoord;
       vLighting = ambientLight + directionalLightColor * directional;
     }
   `;
@@ -49,11 +50,12 @@
     uniform sampler2D uSampler;
 
     void main () {
+      highp vec4 texelColor = texture2D(uSampler, vTextureCoord);
+
       // gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
       // gl_FragColor = vColor;
       // gl_FragColor = texture2D(uSampler, vTextureCoord);
-      highp vec4 texelColor = texture2D(uSampler, vTextureCoord);
-      gl_FragColor = vec4(texelColor.rgb * vLighting, texelColor.a);
+      gl_FragColor = vec4(texelColor.rgb * vLighting, texelColor.a);  // Vector Modulation
     }
   `;
 
@@ -223,6 +225,7 @@
 
   var program = createShaderProgram(gl, vsSource, fsSource);
   var programInfo = getShaderProgramInfo(gl, program);
+  gl.useProgram(program);
 
   // var bufferInfo = {
   //   "aVertexPosition": createBuffer(gl, squarePositions),
@@ -259,7 +262,9 @@
   drawScene(gl, programInfo, bufferInfo, texture);
 
   var rotateAnimation = createRotateAnimation(function (deltaRotation) {
-    updateTexture(gl, texture, video);
+    if (!video.paused) {
+      updateTexture(gl, texture, video);
+    }
     drawScene(gl, programInfo, bufferInfo, texture, squareRotation += deltaRotation);
   });
 
@@ -418,7 +423,6 @@
     gl.attachShader(program, vertexShader);
     gl.attachShader(program, fragmentShader);
     gl.linkProgram(program);
-    gl.useProgram(program);
 
     return program;
   }
