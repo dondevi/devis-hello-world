@@ -6,6 +6,7 @@
  */
 
 // var matrix;
+var img;
 var lineColor;
 
 
@@ -18,6 +19,7 @@ var lineColor;
 
 function preload() {
   // matrix = loadJSON("./data.json");
+  img = loadImage("./img.jpg");
 }
 
 function setup() {
@@ -26,7 +28,9 @@ function setup() {
 }
 
 function draw() {
-  if (mouseIsPressed) {}
+  if (mouseIsPressed) {
+    point(random(800), random(600));
+  }
 }
 
 function mousePressed() {
@@ -111,4 +115,9 @@ function _reset () {
 
   colorMode(RGB, 255, 255, 255, 1);
   lineColor = lerpColor(bgColor, xAxisColor, 0.5);
+
+  noFill();
+  rect(300, 200, 200, 200);
+
+  image(img, 0, 0, 128, 128);
 }
