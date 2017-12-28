@@ -1,0 +1,11 @@
+{
+  "name": "sockeio-hello-world",
+  "version": "0.0.1",
+  "author": "dondevi",
+  "dependencies": {
+    "socket.io": "*"
+  },
+  "scripts": {
+    "dev": "node ."
+  }
+}
