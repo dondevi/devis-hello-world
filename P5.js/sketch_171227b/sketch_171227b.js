@@ -5,9 +5,10 @@
  * @create 2017-12-27
  */
 
-// var matrix;
+var socket;
 var img;
 var lineColor;
+// var matrix;
 
 
 
@@ -17,42 +18,52 @@ var lineColor;
  * -----------------------------------------------------------------------------
  */
 
-function preload() {
+function preload () {
   // matrix = loadJSON("./data.json");
   img = loadImage("./img.jpg");
 }
 
-function setup() {
-  createCanvas(800, 600);
+function setup () {
+  socket = io.connect("http://192.168.0.81:3000");
+  socket.on("mouse", data => {
+    ellipse(data.x, data.y, 30, 30);
+  });
+
+  var canvas = createCanvas(800, 600);
+  canvas.parent("sketch");
+  canvas.mouseClicked(event => {
+    socket.emit("mouse", { x: mouseX, y: mouseY });
+  });
+
   _init();
 }
 
-function draw() {
+function draw () {
   if (mouseIsPressed) {
     point(random(800), random(600));
   }
 }
 
-function mousePressed() {
+function mousePressed () {
 }
 
-function mouseDragged() {
+function mouseDragged () {
   _main();
 }
 
-function mouseReleased() {
+function mouseReleased () {
   if (RIGHT === mouseButton) {
     _reset();
   }
 }
 
-function mouseClicked() {
+function mouseClicked () {
 }
 
-function doubleClicked() {
+function doubleClicked () {
 }
 
-function mouseWheel(event) {
+function mouseWheel (event) {
 }
 
 
@@ -66,16 +77,21 @@ function mouseWheel(event) {
 function _main () {
   let alpha = random(1);
 
+  stroke(lineColor, alpha);
+  line(400, 300, mouseX, mouseY);
+
   noStroke();
   fill(random(255), random(255), random(255), alpha);
   ellipse(mouseX, mouseY, 20, 20);
-
-  stroke(lineColor, alpha);
-  line(400, 300, mouseX, mouseY);
 }
 
 function _init () {
   document.body.oncontextmenu = event => false;
+  var divDom = createDiv(`<a href="http://192.168.0.81:8971" target="_blank">Hello World!</a>`);
+  var imgDom = createImg("./img.jpg");
+  imgDom.size(200, 200);
+  imgDom.position(300, 200);
+  imgDom.mouseClicked(_reset);
   _reset();
 }
 
