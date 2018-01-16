@@ -1,3 +1,12 @@
+<!--
+/**
+ * SVG Hello World
+ * @see https://svg.brucewar.cn/
+ *
+ * @author dondevi
+ * @create 2018-01-16
+ */
+-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,39 +17,28 @@
       background-color: #eee;
     }
     rect {
-      stroke: red;
       fill: url(#linearGradient);
       fill-opacity: 0.5;
     }
-    circle {
-      stroke: green;
+    #circle {
       fill: url(#radialGradient);
     }
     ellipse {
-      stroke: blue;
+      stroke-dasharray: 10 5 5 5;
+      stroke-dashoffset: 5;
       fill: none;
       filter: url(#feGaussianBlur);
-    }
-    line {
-      stroke: cyan;
-    }
-    polyline {
-      stroke: magenta;
-      fill: none;
-    }
-    polygon {
-      stroke: yellow;
-      fill: none;
-    }
-    path {
-      stroke: black;
-      fill: none;
     }
   </style>
 </head>
 <body>
 
-  <svg width="100%" height="300">
+  <iframe src="hello.svg" width="100" height="100"></iframe>
+  <img src="hello.svg" width="100" height="100">
+  <embed src="hello.svg" width="100" height="100">
+  <div style="display: inline-block; width: 100px; height: 100px; background: url(hello.svg);"></div>
+
+  <svg width="100%" height="400">
     <defs>
       <filter id="feGaussianBlur">
         <feGaussianBlur in="SourceGraphic" stdDeviation="2"></feGaussianBlur>
@@ -53,31 +51,72 @@
         <stop offset="20%" stop-color="red"></stop>
         <stop offset="80%" stop-color="blue"></stop>
       </radialGradient>
+      <marker id="markerStart" markerWidth="10" markerHeight="10" refX="5" refY="5" markerUnits="strokeWidth">
+        <circle cx="5" cy="5" r="4" fill="black"></circle>
+      </marker>
+      <marker id="markerEnd" markerWidth="12" markerHeight="12" refX="3" refY="5" orient="auto">
+        <polygon points="0 0 9 5 0 9" fill="black"></polygon>
+      </marker>
+      <path id="textPath" d="M0 120 Q50 130 100 120"></path>
     </defs>
 
-    <rect rx="50" ry="10" width="100" height="100"></rect>
+    <rect stroke="red" rx="50" ry="10" width="100" height="100"></rect>
+    <text x="10" stroke="black" font-weight="bold" fill="none">
+      <textPath href="#textPath">Rect Graph</textPath>
+    </text>
     <a href="http://www.w3school.com.cn/svg/" target="_blank">
-      <circle cx="160" cy="50" r="50"></circle>
+      <circle id="circle" stroke="green" cx="160" cy="50" r="50"></circle>
+      <text x="160" y="125" text-anchor="middle">
+        <tspan>Circle</tspan>
+        <tspan dy="-1 -1 -2 -2 -3">Graph</tspan>
+      </text>
     </a>
-    <ellipse cx="280" cy="50" rx="60" ry="50">
-      <animateColor></animateColor>
-    </ellipse>
-    <line x1="360" y1="0" x2="410" y2="100"></line>
-    <polyline points="420,0 470,0 420,100 470,100"></polyline>
-    <polygon points="480,0 530,0 480,100 530,100"></polygon>
-    <path d="M590 60
-             C590 60 588 60 588 60
-             C588 65 590 70 593 70
-             C601 70 608 65 608 60
-             C608 48 601 40 593 40
-             C579 40 568 48 568 60
-             C568 76 579 90 593 90
-             C612 90 628 76 628 60
-             C628 37 612 20 593 20
-             C568 20 548 37 548 60
-             C548 87 568 110 593 110
-             C623 110 648 87 648 60
-             C648 26 623 0 593 0">
+    <ellipse stroke="blue" cx="280" cy="50" rx="60" ry="50"></ellipse>
+    <text x="320" y="125" text-anchor="end" textLength="80"
+          lengthAdjust="spacingAndGlyphs">
+      Ellip<tspan baseline-shift="super">se</tspan>
+    </text>
+
+    <g fill="none" transform="rotate(27 360 50)">
+      <line stroke="cyan" x1="360" y1="0" x2="410" y2="100"
+            stroke-width="10" stroke-linecap="round"></line>
+      <polyline stroke="magenta" points="420,0 470,0 420,100 470,100"
+        stroke-width="3" stroke-linejoin="miter" stroke-miterlimit="1"
+        marker-start="url(#markerStart)"
+        marker-end="url(#markerEnd)"></polyline>
+      <polygon stroke="yellow" points="490,0 540,0 490,100 540,100"></polygon>
+      <path stroke="black" d="M590 60
+        C590 60 588 60 588 60
+        C588 65 590 70 593 70
+        C601 70 608 65 608 60
+        C608 48 601 40 593 40
+        C579 40 568 48 568 60
+        C568 76 579 90 593 90
+        C612 90 628 76 628 60
+        C628 37 612 20 593 20
+        C568 20 548 37 548 60
+        C548 87 568 110 593 110
+        C623 110 648 87 648 60
+        C648 26 623 0 593 0"></path>
+    </g>
+
+    <switch>
+      <g systemLanguage="en">
+        <text y="200">English</text>
+      </g>
+      <g systemLanguage="zh">
+        <text y="200">中文</text>
+      </g>
+    </switch>
+
+    <image href="hello.svg" x="110" y="200" width="100" height="100"></image>
+
+    <symbol id="symbol" preserveAspectRatio="xMidyMid meet" viewBox="0 0">
+      <use href="#textPath" y="10"></use>
+      <use href="#textPath" y="15"></use>
+    </symbol>
+
+    <use href="#symbol" stroke="red" fill="none"></use>
   </svg>
 
 </body>

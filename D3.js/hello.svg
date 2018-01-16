@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+
+  <defs>
+    <linearGradient id="linearGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="10%" stop-color="green"></stop>
+      <stop offset="90%" stop-color="blue"></stop>
+    </linearGradient>
+    <radialGradient id="radialGradient" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+      <stop offset="20%" stop-color="red"></stop>
+      <stop offset="80%" stop-color="blue"></stop>
+    </radialGradient>
+  </defs>
+
+  <rect stroke="red" rx="50" ry="10" width="100" height="100" fill="url(#linearGradient)" fill-opacity="0.6"></rect>
+  <a href="http://www.w3school.com.cn/svg/" target="_blank">
+    <circle stroke="green" cx="160" cy="50" r="50" fill="url(#radialGradient)"></circle>
+  </a>
+
+</svg>
