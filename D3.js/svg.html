@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SVG Hello World</title>
+  <style>
+    body {
+      background-color: #eee;
+    }
+    rect {
+      stroke: red;
+      fill: url(#linearGradient);
+      fill-opacity: 0.5;
+    }
+    circle {
+      stroke: green;
+      fill: url(#radialGradient);
+    }
+    ellipse {
+      stroke: blue;
+      fill: none;
+      filter: url(#feGaussianBlur);
+    }
+    line {
+      stroke: cyan;
+    }
+    polyline {
+      stroke: magenta;
+      fill: none;
+    }
+    polygon {
+      stroke: yellow;
+      fill: none;
+    }
+    path {
+      stroke: black;
+      fill: none;
+    }
+  </style>
+</head>
+<body>
+
+  <svg width="100%" height="300">
+    <defs>
+      <filter id="feGaussianBlur">
+        <feGaussianBlur in="SourceGraphic" stdDeviation="2"></feGaussianBlur>
+      </filter>
+      <linearGradient id="linearGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="10%" stop-color="green"></stop>
+        <stop offset="90%" stop-color="blue"></stop>
+      </linearGradient>
+      <radialGradient id="radialGradient" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+        <stop offset="20%" stop-color="red"></stop>
+        <stop offset="80%" stop-color="blue"></stop>
+      </radialGradient>
+    </defs>
+
+    <rect rx="50" ry="10" width="100" height="100"></rect>
+    <a href="http://www.w3school.com.cn/svg/" target="_blank">
+      <circle cx="160" cy="50" r="50"></circle>
+    </a>
+    <ellipse cx="280" cy="50" rx="60" ry="50">
+      <animateColor></animateColor>
+    </ellipse>
+    <line x1="360" y1="0" x2="410" y2="100"></line>
+    <polyline points="420,0 470,0 420,100 470,100"></polyline>
+    <polygon points="480,0 530,0 480,100 530,100"></polygon>
+    <path d="M590 60
+             C590 60 588 60 588 60
+             C588 65 590 70 593 70
+             C601 70 608 65 608 60
+             C608 48 601 40 593 40
+             C579 40 568 48 568 60
+             C568 76 579 90 593 90
+             C612 90 628 76 628 60
+             C628 37 612 20 593 20
+             C568 20 548 37 548 60
+             C548 87 568 110 593 110
+             C623 110 648 87 648 60
+             C648 26 623 0 593 0">
+  </svg>
+
+</body>
+</html>
