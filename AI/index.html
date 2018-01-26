@@ -1,0 +1,146 @@
+<!--
+/**
+ *《AI Introduction to Machine Learning》
+ *
+ * @author dondevi
+ * @create 2018-01-26
+ */
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AI Introduction to Machine Learning</title>
+  <script src="https://d3js.org/d3.v4.min.js"></script>
+</head>
+<body>
+
+  <script>
+    ((window, document) => {
+      "use strict";
+
+      const pais = [
+        { "id": "ex1", "shape": "circle", "crust-size": "thick", "crust-shade": "gray", "filling-size": "thick", "filling-shade": "dark", "type": "pos" },
+        { "id": "ex2", "shape": "circle", "crust-size": "thick", "crust-shade": "white", "filling-size": "thick", "filling-shade": "dark", "type": "pos" },
+        { "id": "ex3", "shape": "triangle", "crust-size": "thick", "crust-shade": "dark", "filling-size": "thick", "filling-shade": "gray", "type": "pos" },
+        { "id": "ex4", "shape": "circle", "crust-size": "thin", "crust-shade": "white", "filling-size": "thin", "filling-shade": "dark", "type": "pos" },
+        { "id": "ex5", "shape": "square", "crust-size": "thick", "crust-shade": "dark", "filling-size": "thin", "filling-shade": "white", "type": "pos" },
+        { "id": "ex6", "shape": "circle", "crust-size": "thick", "crust-shade": "white", "filling-size": "thin", "filling-shade": "dark", "type": "pos" },
+        { "id": "ex7", "shape": "circle", "crust-size": "thick", "crust-shade": "gray", "filling-size": "thick", "filling-shade": "white", "type": "neg" },
+        { "id": "ex8", "shape": "square", "crust-size": "thick", "crust-shade": "white", "filling-size": "thick", "filling-shade": "gray", "type": "neg" },
+        { "id": "ex9", "shape": "triangle", "crust-size": "thin", "crust-shade": "gray", "filling-size": "thin", "filling-shade": "dark", "type": "neg" },
+        { "id": "ex10", "shape": "circle", "crust-size": "thick", "crust-shade": "dark", "filling-size": "thick", "filling-shade": "white", "type": "neg" },
+        { "id": "ex11", "shape": "square", "crust-size": "thick", "crust-shade": "white", "filling-size": "thick", "filling-shade": "dark", "type": "neg" },
+        { "id": "ex12", "shape": "triangle", "crust-size": "thick", "crust-shade": "white", "filling-size": "thick", "filling-shade": "gray", "type": "neg" },
+      ];
+
+
+      let svg = d3.select("body").append("svg");
+      svg.attr("width", "100%").attr("height", "500");
+
+      let groups = svg.selectAll("g")
+        .data(pais, d => d["id"])
+        .enter().append("g")
+          .attr("transform", (d, i) => `translate(${110 * i + 10}, 10)`);
+
+      groups.each((d, i, n) => {
+        var g = d3.select(n[i]);
+        g.attr("stroke", "pos" === d["type"] ? "green" : "red")
+          .attr("opacity", 0.1)
+          .append("title").text(d["type"]);
+        switch (d["shape"]) {
+          case "circle":
+            g.append("circle")
+                .attr("r", d => "thick" === d["crust-size"] ? 50 : 30)
+                .attr("cx", 50)
+                .attr("cy", 50)
+                .attr("fill", d => d["crust-shade"]);
+            g.append("circle")
+                .attr("r", d => "thick" === d["filling-size"] ? 20 : 10)
+                .attr("cx", 50)
+                .attr("cy", 50)
+                .attr("stroke", "none")
+                .attr("fill", d => d["filling-shade"]);
+            break;
+          case "square":
+            g.append("rect")
+                .attr("width", d => "thick" === d["crust-size"] ? 100 : 60)
+                .attr("height", d => "thick" === d["crust-size"] ? 100 : 60)
+                .attr("fill", d => d["crust-shade"]);
+            g.append("rect")
+                .attr("width", d => "thick" === d["filling-size"] ? 20 : 10)
+                .attr("height", d => "thick" === d["filling-size"] ? 20 : 10)
+                .attr("x", (d, i, n) => (n[i].previousElementSibling.attributes.width.value - n[i].attributes.width.value) / 2)
+                .attr("y", (d, i, n) => (n[i].previousElementSibling.attributes.width.value - n[i].attributes.width.value) / 2)
+                .attr("stroke", "none")
+                .attr("fill", d => d["filling-shade"]);
+            break;
+          case "triangle":
+            g.append("path")
+                .attr("d", d => "thick" === d["crust-size"] ? "M0 0 L100 0 L50 100 L0 0 Z" : "M20 0 L80 0 L50 100 L20 0 Z")
+                .attr("fill", d => d["crust-shade"]);
+            g.append("path")
+                .attr("d", d => "thick" === d["filling-size"] ? "M35 25 L65 25 L50 55 L35 25 Z" : "M42 30 L58 30 L50 50 L42 30 Z")
+                .attr("stroke", "none")
+                .attr("fill", d => d["filling-shade"]);
+            break;
+        }
+      });
+
+      let finalState = pais.map(pai => pai["type"]);
+      let searchState = pais.map(classifier.bind(null, operator1));
+
+      let matchRate = evaluator(finalState, searchState, matchState => {
+        groups.filter((d, i) => matchState[i])
+            .transition().duration(1000).style("opacity", 1);
+      });
+
+      console.log(matchRate);
+
+      // Hill Climbing
+      function algorithm () {}
+
+      function classifier (operator, pai) {
+        return operator(pai) ? "pos" : "neg";
+      }
+
+      function evaluator (finalState, searchState, callback) {
+        let matchState = finalState.map((state, i) => {
+          return state === searchState[i];
+        });
+        callback && callback(matchState);
+        return matchState.filter(m => m).length / finalState.length;
+      }
+
+
+      const ppls = [
+        { name: "shape", values: ["circle", "square", "triangle"] },
+        { name: "crust-size", values: ["thick", "thin"] },
+        { name: "crust-shade", values: ["white", "gray", "dark"] },
+        { name: "filling-size", values: ["thick", "thin"] },
+        { name: "filling-shade", values: ["white", "gray", "dark"] },
+      ];
+
+      let searchOperator = `"circle" === pai["shape"]`;
+      function assembler () {
+        let logicOperator = "&&" || "||";
+        return `${searchOperator} ${logicOperator} `
+      }
+
+      function operator1 (pai) {
+        return "circle" === pai["shape"] && "dark" === pai["filling-shade"];
+      }
+      function operator2 (pai) {
+        return "circle" === pai["shape"] && "dark" === pai["filling-shade"] ||
+               "thick" === pai["crust-size"];
+      }
+      function operator3 (pai) {
+        return ("circle" === pai["shape"] && "dark" === pai["filling-shade"]) ||
+               ("circle" !== pai["shape"] && "dark" === pai["crust-shade"]);
+      }
+
+    })(window, document);
+  </script>
+
+</body>
+</html>
