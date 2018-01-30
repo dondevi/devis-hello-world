@@ -66,7 +66,7 @@
             .attr("stroke", d => 0 === d ? "none" : "#000")
             .attr("text-anchor", "middle")
             .text(d => d);
-        update.merge(enter)//.transition().duration(300)
+        update.merge(enter).transition().duration(300)
             .attr("transform", (d, i) => {
               let x = i % 3 * 100;
               let y = Math.floor(i / 3) * 100;
@@ -89,7 +89,7 @@
           window.alert((res ? "Success": "Fail") + " " + count);
           interval.stop();
         });
-      }, 3);
+      }, 300);
 
 
       /**
