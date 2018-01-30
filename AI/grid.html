@@ -2,8 +2,13 @@
 /**
  *《AI Introduction to Machine Learning》
  *
+ * Grid Maze
+ *
  * @author dondevi
  * @create 2018-01-29
+ *
+ * @update 2018-01-30 dondevi
+ *   1.Add historyStates
  */
 -->
 <!DOCTYPE html>
@@ -19,38 +24,51 @@
     ((window, document) => {
       "use strict";
 
+      /**
+       * -----------------------------------------------------------------------
+       *  Data
+       * -----------------------------------------------------------------------
+       */
       const finalState = [
         1, 2, 3,
         8, 0, 4,
         7, 6, 5,
       ];
-
-      let searchState = [
+      const initialState = [
         0, 2, 1,
         6, 7, 4,
         3, 8, 5,
       ];
 
+      let searchState = initialState.slice();
+      let historyStates = [];
+
+
+      /**
+       * -----------------------------------------------------------------------
+       *  Render
+       * -----------------------------------------------------------------------
+       */
       let svg = d3.select("body").append("svg")
           .attr("width", 300)
           .attr("height", 300);
 
-      function redraw () {
+      function draw () {
         let gs = svg.selectAll("g");
         let update = gs.data(searchState, d => d);
         let enter = update.enter().append("g");
         enter.append("rect")
             .attr("width", 100)
             .attr("height", 100)
-            .attr("stroke", d => 0 === d ? "none" : "#000")
+            .attr("stroke", "#000")
             .attr("fill", d => 0 === d ? "#ccc" : "#fff");
         enter.append("text")
             .attr("x", 50)
-            .attr("y", 50)
+            .attr("y", 52)
             .attr("stroke", d => 0 === d ? "none" : "#000")
             .attr("text-anchor", "middle")
             .text(d => d);
-        update.merge(enter).transition().duration(500)
+        update.merge(enter).transition().duration(300)
             .attr("transform", (d, i) => {
               let x = i % 3 * 100;
               let y = Math.floor(i / 3) * 100;
@@ -59,31 +77,52 @@
       }
 
 
-      redraw();
-      let interval = d3.interval(algorithm, 1000);
-      interval.count = 1;
+      /**
+       * -----------------------------------------------------------------------
+       *  Main
+       * -----------------------------------------------------------------------
+       */
+      draw();
+
+      let count = 1;
+      let interval = d3.interval(() => {
+        count += 1;
+        algorithm(res => {
+          window.alert((res ? "Success": "Fail") + " " + count);
+          return interval.stop();
+        });
+      }, 300);
+
+
+      /**
+       * -----------------------------------------------------------------------
+       *  Function
+       * -----------------------------------------------------------------------
+       */
 
       /**
        * Algorithm iteration
        */
-      function algorithm () {
+      function algorithm (callback) {
         let searchStates = searcher(searchState);
         let searchResult = searchStates.map(searchState => {
           return { searchState, evaluation: evaluator(finalState, searchState) };
         });
+        if (!searchResult[0]) {
+          return callback && callback(false);
+        }
         searchResult.sort((a, b) => {
           if (a.evaluation === b.evaluation) {
             return [-1, 1][Math.round(Math.random())];
           }
           return a.evaluation - b.evaluation;
         });
-        if (0 === searchResult[0].evaluation) {
-          console.log(interval.count);
-          return interval.stop();
-        }
-        interval.count += 1;
         searchState = searchResult[0].searchState;
-        redraw();
+        historyStates.push(searchState.join());
+        draw();
+        if (0 === searchResult[0].evaluation) {
+          return callback && callback(true);
+        }
       }
 
       /**
@@ -91,7 +130,7 @@
        * @param  {Array} searchState
        * @return {Array} searchStates for next step
        */
-      function searcher (searchState) {
+      function searcher () {
         let blankIndex = searchState.indexOf(0);
         let siblingOffsets = [-3, 1, 3, -1];
         return siblingOffsets.map(siblingOffset => {
@@ -104,6 +143,9 @@
           let cloneState = searchState.slice();
           [cloneState[blankIndex], cloneState[itemIndex]] =
           [cloneState[itemIndex], cloneState[blankIndex]];
+          if (-1 < historyStates.indexOf(cloneState.join())) {
+            return null;
+          }
           return cloneState;
         }).filter(searchState => searchState);
       }
@@ -119,14 +161,7 @@
           let searchIndex = searchState.indexOf(finalItem);
           let stepX = Math.abs(finalIndex - searchIndex) % 3;
           let stepY = Math.floor(Math.abs(finalIndex - searchIndex) / 3);
-          let weight = 1;
-          // let siblingOffsets = [-3, 1, 3, -1];
-          // siblingOffsets.forEach(siblingOffset => {
-          //   if (0 === searchState[finalIndex + siblingOffset]) {
-          //     weight = 2;
-          //   }
-          // });
-          return stepSum + (stepX + stepY) * weight;
+          return stepSum + stepX + stepY;
         }, 0);
       }
 
