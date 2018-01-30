@@ -1,6 +1,6 @@
 <!--
 /**
- *《AI Introduction to Machine Learning》
+ *《An Introduction to Machine Learning》
  *
  * @author dondevi
  * @create 2018-01-26
@@ -10,7 +10,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>AI Introduction to Machine Learning</title>
+  <title>Junny Pai</title>
   <script src="https://d3js.org/d3.v4.min.js"></script>
 </head>
 <body>
@@ -19,6 +19,14 @@
     ((window, document) => {
       "use strict";
 
+
+      /**
+       * -----------------------------------------------------------------------
+       *  Data
+       * -----------------------------------------------------------------------
+       */
+
+      // Feature Vectors
       const pais = [
         { "id": "ex1", "shape": "circle", "crust-size": "thick", "crust-shade": "gray", "filling-size": "thick", "filling-shade": "dark", "type": "pos" },
         { "id": "ex2", "shape": "circle", "crust-size": "thick", "crust-shade": "white", "filling-size": "thick", "filling-shade": "dark", "type": "pos" },
@@ -34,6 +42,13 @@
         { "id": "ex12", "shape": "triangle", "crust-size": "thick", "crust-shade": "white", "filling-size": "thick", "filling-shade": "gray", "type": "neg" },
       ];
 
+
+
+      /**
+       * -----------------------------------------------------------------------
+       *  Render
+       * -----------------------------------------------------------------------
+       */
 
       let svg = d3.select("body").append("svg");
       svg.attr("width", "100%").attr("height", "500");
@@ -87,6 +102,13 @@
         }
       });
 
+
+      /**
+       * -----------------------------------------------------------------------
+       *  Main
+       * -----------------------------------------------------------------------
+       */
+
       let finalState = pais.map(pai => pai["type"]);
       let searchState = pais.map(classifier.bind(null, operator1));
 
@@ -96,6 +118,13 @@
       });
 
       console.log(matchRate);
+
+
+      /**
+       * -----------------------------------------------------------------------
+       *  Function
+       * -----------------------------------------------------------------------
+       */
 
       // Hill Climbing
       function algorithm () {}
