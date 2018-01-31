@@ -6,7 +6,9 @@
  * @create 2018-01-29
  *
  * @update 2018-01-30 dondevi
- *   1.Add historyStates
+ *   1.Add: "historyStates", 50%
+ * @update 2018-01-31 dondevi
+ *   1.Update: "historyTree" instead of "historyStates" , 100%
  */
 -->
 <!DOCTYPE html>
@@ -27,19 +29,26 @@
        *  Data
        * -----------------------------------------------------------------------
        */
-      const finalState = [
+      const FINAL_STATE = [
         1, 2, 3,
         8, 0, 4,
         7, 6, 5,
       ];
-      const initialState = [
+      const INITIAL_STATE = [
         0, 2, 1,
         6, 7, 4,
         3, 8, 5,
       ];
+      const MATRIX_SIZE = 3;
 
-      let searchState = initialState.slice();
-      let historyStates = [];
+      let searchTree = [
+        {
+          searchState: INITIAL_STATE.slice(),
+          evaluation: evaluator(FINAL_STATE, INITIAL_STATE),
+          isTraversed: false,
+          children: null,
+        }
+      ];
 
 
       /**
@@ -51,9 +60,9 @@
           .attr("width", 300)
           .attr("height", 300);
 
-      function draw () {
+      function draw (data) {
         let gs = svg.selectAll("g");
-        let update = gs.data(searchState, d => d);
+        let update = gs.data(data, d => d);
         let enter = update.enter().append("g");
         enter.append("rect")
             .attr("width", 100)
@@ -66,11 +75,10 @@
             .attr("stroke", d => 0 === d ? "none" : "#000")
             .attr("text-anchor", "middle")
             .text(d => d);
-        update.merge(enter).transition().duration(300)
             .attr("transform", (d, i) => {
-              let x = i % 3 * 100;
-              let y = Math.floor(i / 3) * 100;
-              return `translate(${x}, ${y})`;
+              let { x, y } = locator(i, MATRIX_SIZE);
+              let size = 100;
+              return `translate(${x * size}, ${y * size})`;
             });
       }
 
@@ -80,16 +88,16 @@
        *  Main
        * -----------------------------------------------------------------------
        */
-      draw();
-
-      let count = 1;
+      let count = 0;
+      let searchNode = searchTree[0];
       let interval = d3.interval(() => {
         count += 1;
         algorithm(res => {
           window.alert((res ? "Success": "Fail") + " " + count);
           interval.stop();
         });
-      }, 300);
+
+      draw(searchNode.searchState);
 
 
       /**
@@ -102,50 +110,66 @@
        * Algorithm iteration
        */
       function algorithm (callback) {
-        let searchStates = searcher(searchState);
-        let searchResult = searchStates.map(searchState => {
-          return { searchState, evaluation: evaluator(finalState, searchState) };
-        });
-        if (!searchResult[0]) {
-          return callback && callback(false);
+        let { parent, children, evaluation } = searchNode;
+        if (!children) {
+          searchNode.children = searcher(searchNode);
+          children = searchNode.children;
+          searchTree.push(...children);
         }
-        searchResult.sort((a, b) => {
+        let nextNode = children.find(node => !node.isTraversed);
+        if (!nextNode) {
+          searchNode.isTraversed = true;
+        }
+        searchNode = nextNode || parent;
+        if (!searchNode) {
+          return callback(false);
+        }
+        draw(searchNode.searchState);
+        if (0 === searchNode.evaluation) {
+          callback(true);
+        }
+      }
+
+      /**
+       * Search next steps
+       * @param  {Object} searchNode
+       * @return {Array} searchStates for next step
+       */
+      function searcher (searchNode) {
+        let { parent, searchState, searchPath } = searchNode;
+        let preState = parent && parent.searchState || [];
+        let blankIndex = searchState.indexOf(0);
+        let { x: blankX, y: blankY } = locator(blankIndex, MATRIX_SIZE);
+        return searchState.map((item, itemIndex) => {
+          let { x: itemX, y: itemY } = locator(itemIndex, MATRIX_SIZE);
+          if (!checkSibling(blankX, blankY, itemX, itemY)) { return null; }
+          let nextState = getNextState(searchState, blankIndex, itemIndex);
+          if (checkRepeat(nextState)) { return null; }
+          return {
+            parent: searchNode,
+            searchState: nextState,
+            evaluation: evaluator(FINAL_STATE, nextState),
+            isTraversed: false,
+          };
+        }).filter(searchNode => searchNode).sort((a, b) => {
           if (a.evaluation === b.evaluation) {
             return [-1, 1][Math.round(Math.random())];
           }
           return a.evaluation - b.evaluation;
         });
-        searchState = searchResult[0].searchState;
-        historyStates.push(searchState.join());
-        draw();
-        if (0 === searchResult[0].evaluation) {
-          return callback && callback(true);
-        }
       }
 
-      /**
-       * Searcher
-       * @param  {Array} searchState
-       * @return {Array} searchStates for next step
-       */
-      function searcher () {
-        let blankIndex = searchState.indexOf(0);
-        let siblingOffsets = [-3, 1, 3, -1];
-        return siblingOffsets.map(siblingOffset => {
-          let itemIndex = blankIndex + siblingOffset;
-          if ((2 === blankIndex % 3 && 1 === siblingOffset)
-            || (0 === blankIndex % 3 && -1 === siblingOffset)
-            || !searchState[itemIndex]) {
-            return null;
-          }
-          let cloneState = searchState.slice();
-          [cloneState[blankIndex], cloneState[itemIndex]] =
-          [cloneState[itemIndex], cloneState[blankIndex]];
-          if (-1 < historyStates.indexOf(cloneState.join())) {
-            return null;
-          }
-          return cloneState;
-        }).filter(searchState => searchState);
+      function checkRepeat (searchState) {
+        return !!searchTree.find(searchNode => {
+          return searchNode.searchState.join() === searchState.join();
+        });
+      }
+
+      function getNextState (currentState, fromIndex, toIndex) {
+        let cloneState = currentState.slice();
+        [cloneState[fromIndex], cloneState[toIndex]] =
+        [cloneState[toIndex], cloneState[fromIndex]];
+        return cloneState;
       }
 
       /**
@@ -157,10 +181,38 @@
       function evaluator (finalState, searchState) {
         return finalState.reduce((stepSum, finalItem, finalIndex) => {
           let searchIndex = searchState.indexOf(finalItem);
-          let stepX = Math.abs(finalIndex - searchIndex) % 3;
-          let stepY = Math.floor(Math.abs(finalIndex - searchIndex) / 3);
+          let { x: finalX, y: finalY } = locator(finalIndex);
+          let { x: searchX, y: searchY } = locator(searchIndex);
+          let stepX = Math.abs(finalX - searchX);
+          let stepY = Math.abs(finalY - searchY);
           return stepSum + stepX + stepY;
         }, 0);
+      }
+
+      /**
+       * Get matrix position from Array
+       * @param  {Number} arrayIndex
+       * @param  {Number} matrixWidth
+       * @param  {Number} matrixHeight
+       * @return {Object} position
+       */
+      function locator (arrayIndex, matrixWidth = 1, matrixHeight = matrixWidth) {
+        return {
+          x: arrayIndex % matrixWidth,
+          y: Math.floor(arrayIndex / matrixHeight),
+        };
+      }
+
+      /**
+       * Check if item is sibling
+       * @param  {Number} x
+       * @param  {Number} y
+       * @param  {Number} targetX
+       * @param  {Number} targetY
+       * @return {Bollean}
+       */
+      function checkSibling (x, y, targetX, targetY) {
+        return 1 === (Math.abs(x - targetX) + Math.abs(y - targetY));
       }
 
     })(window, document);
