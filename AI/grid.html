@@ -75,6 +75,7 @@
             .attr("stroke", d => 0 === d ? "none" : "#000")
             .attr("text-anchor", "middle")
             .text(d => d);
+        update.merge(enter).transition().duration(200)
             .attr("transform", (d, i) => {
               let { x, y } = locator(i, MATRIX_SIZE);
               let size = 100;
@@ -96,6 +97,7 @@
           window.alert((res ? "Success": "Fail") + " " + count);
           interval.stop();
         });
+      }, 200);
 
       draw(searchNode.searchState);
 
