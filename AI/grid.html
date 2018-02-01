@@ -9,6 +9,8 @@
  *   1.Add: "historyStates", 50%
  * @update 2018-01-31 dondevi
  *   1.Update: "historyTree" instead of "historyStates" , 100%
+ * @update 2018-02-01 dondevi
+ *   1.Fix: locator() in evaluator() lose "MATRIX_SIZE"
  */
 -->
 <!DOCTYPE html>
@@ -181,12 +183,15 @@
        * @return {Number} evaluation
        */
       function evaluator (finalState, searchState) {
+        // let blankIndex = searchState.indexOf(0);
+        // let { x: blankX, y: blankY } = locator(blankIndex, MATRIX_SIZE);
         return finalState.reduce((stepSum, finalItem, finalIndex) => {
           let searchIndex = searchState.indexOf(finalItem);
-          let { x: finalX, y: finalY } = locator(finalIndex);
-          let { x: searchX, y: searchY } = locator(searchIndex);
+          let { x: finalX, y: finalY } = locator(finalIndex, MATRIX_SIZE);
+          let { x: searchX, y: searchY } = locator(searchIndex, MATRIX_SIZE);
           let stepX = Math.abs(finalX - searchX);
           let stepY = Math.abs(finalY - searchY);
+          // if (checkSibling(blankX, blankY, searchX, searchY)) {}
           return stepSum + stepX + stepY;
         }, 0);
       }
