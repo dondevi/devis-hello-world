@@ -124,11 +124,6 @@
       "path": "exception/404",
       "layout": "HeaderAsideFooterLayout",
       "builtIn": true
-    },
-    {
-      "page": "Device",
-      "path": "device",
-      "layout": "HeaderAsideFooterResponsiveLayout"
     }
   ]
 }
