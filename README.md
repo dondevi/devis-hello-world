@@ -1,6 +1,6 @@
-# devis-hello-world
+# Hello World
 
-Try to use Anythings.
+So spent.
 
 - WebGL: <https://dondevi.github.io/devis-hello-world/WebGL/index.html>
 - P5.js: <https://dondevi.github.io/devis-hello-world/P5.js/sketch_171227b/index.html>
