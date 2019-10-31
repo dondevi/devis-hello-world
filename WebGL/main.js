@@ -283,7 +283,7 @@
    * ---------------------------------------------------------------------------
    */
   function HANLDER_clickCanvas (event) {
-    if (rotateAnimation.isStop) {
+    if (rotateAnimation.isStop()) {
       video.play();
       rotateAnimation.run();
     } else {
@@ -326,7 +326,7 @@
     var toggle = function () {
       isStop ? run() : stop();
     };
-    return { isStop: isStop, run: run, stop: stop, toggle: toggle };
+    return { isStop: function () { return isStop }, run: run, stop: stop, toggle: toggle };
   }
 
   /**
