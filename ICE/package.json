@@ -14,7 +14,7 @@
     "@icedesign/layout": "^0.1.1",
     "@icedesign/menu": "^0.1.1",
     "@icedesign/skin": "^0.1.0",
-    "axios": "^0.17.1",
+    "axios": "^0.21.1",
     "bizcharts": "latest",
     "classnames": "^2.2.5",
     "prop-types": "^15.5.8",
